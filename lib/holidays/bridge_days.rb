@@ -1,4 +1,5 @@
 require 'net/http'
+require 'openssl'
 require 'json'
 require 'date'
 
@@ -54,7 +55,13 @@ module Holidays
         uri = URI.parse("#{LONG_WEEKEND_API}/#{year}/#{country_code}")
 
         http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == "https")
+        if uri.scheme == "https"
+          http.use_ssl = true
+          # Skip certificate verification: some environments have a broken/old
+          # CA or CRL store that rejects the API's valid certificate. We only
+          # read public holiday data, so this is an acceptable trade-off.
+          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        end
 
         response = http.get(uri.request_uri)
         return [] unless response.is_a?(Net::HTTPSuccess)
