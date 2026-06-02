@@ -71,4 +71,25 @@ class BridgeDaysTests < Test::Unit::TestCase
     assert_equal [Date.civil(2026, 1, 2)], holidays.map { |h| h[:date] }
     assert_equal "bridge-day", holidays.first[:name]
   end
+
+  def test_production_detection_uses_environment_variables
+    %w[RAILS_ENV RACK_ENV APP_ENV].each do |key|
+      with_env(key, "production") do
+        assert_equal true, Holidays::BridgeDays.send(:production?), "expected production? to be true for #{key}=production"
+      end
+      with_env(key, "staging") do
+        assert_equal false, Holidays::BridgeDays.send(:production?), "expected production? to be false for #{key}=staging"
+      end
+    end
+  end
+
+  private
+
+  def with_env(key, value)
+    old = ENV[key]
+    ENV[key] = value
+    yield
+  ensure
+    ENV[key] = old
+  end
 end

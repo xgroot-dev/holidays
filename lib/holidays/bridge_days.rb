@@ -57,10 +57,11 @@ module Holidays
         http = Net::HTTP.new(uri.host, uri.port)
         if uri.scheme == "https"
           http.use_ssl = true
-          # Skip certificate verification: some environments have a broken/old
-          # CA or CRL store that rejects the API's valid certificate. We only
-          # read public holiday data, so this is an acceptable trade-off.
-          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          # In production keep full certificate verification. Outside production
+          # some machines have a broken/old CA or CRL store that rejects the
+          # API's valid certificate, so we skip verification there. We only read
+          # public holiday data, so this is an acceptable trade-off.
+          http.verify_mode = production? ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
         end
 
         response = http.get(uri.request_uri)
@@ -71,6 +72,12 @@ module Holidays
         # Network/parse failures must not break holiday lookups; degrade to
         # "no long weekend information available".
         []
+      end
+
+      # A gem has no intrinsic notion of "production", so we look at the
+      # environment variables commonly set by Rails/Rack/other frameworks.
+      def production?
+        %w[RAILS_ENV RACK_ENV APP_ENV].any? { |key| ENV[key] == "production" }
       end
     end
   end
