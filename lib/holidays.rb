@@ -8,6 +8,8 @@ require 'holidays/factory/date_calculator'
 require 'holidays/factory/finder'
 require 'holidays/errors'
 require 'holidays/load_all_definitions'
+require 'holidays/bridge_days'
+require 'holidays/vacations'
 
 module Holidays
   WEEKS = {:first => 1, :second => 2, :third => 3, :fourth => 4, :fifth => 5, :last => -1, :second_last => -2, :third_last => -3}
@@ -34,6 +36,12 @@ module Holidays
     def between(start_date, end_date, *options)
       raise ArgumentError unless start_date && end_date
 
+      # The :bridge_days / weekend_as_vacation / working_dates options augment the
+      # result with extra non-working days (and remove working-date overrides).
+      # Strip them out here so the rest of the pipeline (and the cache) only ever
+      # sees regions/observed/informal.
+      settings, options = Vacations.extract_settings(options)
+
       # remove the timezone
       start_date = start_date.new_offset(0) + start_date.offset if start_date.respond_to?(:new_offset)
       end_date = end_date.new_offset(0) + end_date.offset if end_date.respond_to?(:new_offset)
@@ -42,11 +50,15 @@ module Holidays
 
       raise ArgumentError if end_date < start_date
 
-      if cached_holidays = Factory::Definition.cache_repository.find(start_date, end_date, options)
-        return cached_holidays
-      end
+      holidays = if cached_holidays = Factory::Definition.cache_repository.find(start_date, end_date, options)
+                   cached_holidays
+                 else
+                   Factory::Finder.between.call(start_date, end_date, options)
+                 end
 
-      Factory::Finder.between.call(start_date, end_date, options)
+      return holidays unless settings
+
+      Vacations.call(holidays, start_date, end_date, options, settings)
     end
 
     #FIXME All other methods start with a date and require a date. For the next

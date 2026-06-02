@@ -1,5 +1,11 @@
 # Ruby Holidays Gem CHANGELOG
 
+## 8.9.0
+
+* Add `:bridge_days` option to `Holidays.on`/`Holidays.between`. When present, the result includes every regular holiday plus the weekday "bridge" days of any long weekends fetched from the [Nager.Date long weekend API](https://date.nager.at/api/v3/LongWeekend). Bridge days are returned day by day, dates are never duplicated, and a bridge day that coincides with a holiday keeps the holiday's name (others are named `bridge-day`). Saturdays and Sundays are not added as `bridge-day` entries since they are already non-working.
+* Add `weekend_as_vacation:` option. When given a list of weekday symbols (e.g. `[:saturday]`) those weekend days are returned as vacations named `weekend`; an empty list (or the bare `:weekend_as_vacation` symbol) treats every weekend day as a vacation. Holidays/bridge days that fall on these days keep their own name.
+* Add `working_dates:` option, a list of `YYYY-MM-DD` dates that are removed from the result even though they would otherwise be marked as a vacation/bridge/weekend (e.g. Hungary's compensated working Saturdays).
+
 ## 8.8.0
 
 * Update to [v5.7.4 definitions](https://github.com/holidays/definitions/releases/tag/v5.7.4). Please see the changelog for the definition details.

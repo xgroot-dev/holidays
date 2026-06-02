@@ -147,6 +147,36 @@ Holidays.between(from, to, :federalreserve, :observed)
     {:name => "Birthday of Martin Luther King, Jr"....}]
 ```
 
+#### Include bridge days and weekends as non-working days
+
+When you need a full picture of non-working days (not just public holidays) you can pass three additional options. They are most useful together, e.g. for countries like Hungary that have "bridge days" and compensated working Saturdays.
+
+`:bridge_days` adds the weekday "bridge" days of any long weekend, fetched from the [Nager.Date long weekend API](https://date.nager.at/api/v3/LongWeekend), named `bridge-day`. (This makes an HTTPS request; if it is unavailable the lookup degrades gracefully and simply returns no bridge days.)
+
+`weekend_as_vacation:` takes a list of weekday symbols and returns those weekend days as vacations named `weekend`. An empty list (or the bare `:weekend_as_vacation` symbol) means every weekend day; a subset such as `[:saturday]` limits it to Saturdays.
+
+`working_dates:` takes a list of `YYYY-MM-DD` dates that must NOT be marked as a vacation/bridge/weekend even though they otherwise would be (e.g. Hungary's compensated working Saturdays). Any entry on these dates is removed from the result.
+
+Results are returned day by day with no duplicate dates. When a date qualifies for more than one thing, the precedence is: real holiday name, then `bridge-day`, then `weekend`.
+
+```ruby
+from = Date.new(2026, 1, 1)
+to   = Date.new(2026, 12, 31)
+
+Holidays.between(
+  from, to,
+  :hu,
+  :bridge_days,
+  weekend_as_vacation: [:saturday],
+  working_dates: ["2026-01-10", "2026-08-08", "2026-12-12"],
+)
+=> [{:date => #<Date: 2026-01-01>, :name => "Újév", :regions => [:hu]},
+    {:date => #<Date: 2026-01-02>, :name => "bridge-day", :regions => [:hu]},
+    {:date => #<Date: 2026-01-03>, :name => "weekend", :regions => [:hu]},
+    ...]
+# 2026-01-10, 2026-08-08 and 2026-12-12 are working Saturdays, so they are not returned.
+```
+
 #### Check whether any holidays occur during work week
 
 Check if there are any holidays taking place during a specified work week. 'Work week' is defined as the period of Monday through Friday of the week specified by the date.
