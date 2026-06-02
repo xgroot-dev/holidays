@@ -157,7 +157,9 @@ When you need a full picture of non-working days (not just public holidays) you 
 
 `working_dates:` takes a list of `YYYY-MM-DD` dates that must NOT be marked as a vacation/bridge/weekend even though they otherwise would be (e.g. Hungary's compensated working Saturdays). Any entry on these dates is removed from the result.
 
-Results are returned day by day with no duplicate dates. When a date qualifies for more than one thing, the precedence is: real holiday name, then `bridge-day`, then `weekend`.
+`extra_vacation_dates:` takes a list of `YYYY-MM-DD` dates to add manually as holidays named `vacation`. Use it for one-off or future state holidays that are not in the definitions yet (e.g. Hungary declaring `2026-12-24` a public holiday). A real holiday on the same date keeps its own name.
+
+Results are returned day by day with no duplicate dates. When a date qualifies for more than one thing, the precedence is: real holiday name, then a manual `vacation`, then `bridge-day`, then `weekend`.
 
 ```ruby
 from = Date.new(2026, 1, 1)

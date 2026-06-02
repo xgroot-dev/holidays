@@ -5,6 +5,7 @@
 * Add `:bridge_days` option to `Holidays.on`/`Holidays.between`. When present, the result includes every regular holiday plus the weekday "bridge" days of any long weekends fetched from the [Nager.Date long weekend API](https://date.nager.at/api/v3/LongWeekend). Bridge days are returned day by day, dates are never duplicated, and a bridge day that coincides with a holiday keeps the holiday's name (others are named `bridge-day`). Saturdays and Sundays are not added as `bridge-day` entries since they are already non-working.
 * Add `weekend_as_vacation:` option. When given a list of weekday symbols (e.g. `[:saturday]`) those weekend days are returned as vacations named `weekend`; an empty list (or the bare `:weekend_as_vacation` symbol) treats every weekend day as a vacation. Holidays/bridge days that fall on these days keep their own name.
 * Add `working_dates:` option, a list of `YYYY-MM-DD` dates that are removed from the result even though they would otherwise be marked as a vacation/bridge/weekend (e.g. Hungary's compensated working Saturdays).
+* Add `extra_vacation_dates:` option, a list of `YYYY-MM-DD` dates to add manually as holidays named `vacation`, for one-off/future state holidays not yet in the definitions (e.g. Hungary declaring `2026-12-24` a public holiday). A real holiday on the same date keeps its own name.
 
 ## 8.8.0
 

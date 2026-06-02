@@ -19,16 +19,25 @@ module Holidays
   #     would otherwise qualify (e.g. Hungary's compensated working Saturdays).
   #     Any entry on these dates is removed from the result.
   #
+  #   extra_vacation_dates: ["2026-12-24", ...]
+  #     Dates to add manually as holidays named "vacation", for one-off / future
+  #     state holidays that are not in the definitions yet (e.g. Hungary declaring
+  #     2026-12-24 a public holiday). A real holiday on the same date keeps its own
+  #     name.
+  #
   # Dates are never duplicated. Precedence when a date qualifies for more than one
-  # thing: a real holiday keeps its own name, then bridge-day, then weekend.
+  # thing: a real holiday keeps its own name, then a manual vacation, then
+  # bridge-day, then weekend.
   module Vacations
     BRIDGE_DAYS = :bridge_days
     WEEKEND_AS_VACATION = :weekend_as_vacation
     WORKING_DATES = :working_dates
+    EXTRA_VACATION_DATES = :extra_vacation_dates
 
-    OPTIONS = [BRIDGE_DAYS, WEEKEND_AS_VACATION, WORKING_DATES].freeze
+    OPTIONS = [BRIDGE_DAYS, WEEKEND_AS_VACATION, WORKING_DATES, EXTRA_VACATION_DATES].freeze
 
     WEEKEND_NAME = "weekend".freeze
+    VACATION_NAME = "vacation".freeze
 
     WEEKDAY_NUMBERS = {
       :sunday => 0, :monday => 1, :tuesday => 2, :wednesday => 3,
@@ -80,6 +89,14 @@ module Holidays
         seen = {}
         result.each { |h| seen[h[:date]] = true }
 
+        if extra_vacation_dates = settings[:extra_vacation_dates]
+          extra_vacation_dates.each do |date|
+            next if date < start_date || date > end_date
+
+            add(result, seen, date, VACATION_NAME, regions)
+          end
+        end
+
         if settings[:bridge_days]
           BridgeDays.weekdays_between(regions, start_date, end_date).each do |date|
             add(result, seen, date, BridgeDays::NAME, regions)
@@ -120,6 +137,8 @@ module Holidays
           settings[:weekend_as_vacation] = weekday_numbers(days)
         when WORKING_DATES
           settings[:working_dates] = Array(value).map { |d| to_date(d) }
+        when EXTRA_VACATION_DATES
+          settings[:extra_vacation_dates] = Array(value).map { |d| to_date(d) }
         end
       end
 

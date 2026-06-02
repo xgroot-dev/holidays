@@ -58,6 +58,39 @@ class VacationsTests < Test::Unit::TestCase
     assert_not_includes dates, Date.civil(2026, 1, 10) # working Saturday -> removed
   end
 
+  # --- extra_vacation_dates ---------------------------------------------------
+
+  def test_extra_vacation_dates_are_added_as_holidays
+    # 2026-12-24 is not a HU holiday in the definitions; add it manually.
+    holidays = Holidays.between(
+      Date.civil(2026, 12, 24), Date.civil(2026, 12, 24),
+      :hu, :extra_vacation_dates => ["2026-12-24"],
+    )
+
+    assert_equal 1, holidays.size
+    assert_equal Date.civil(2026, 12, 24), holidays.first[:date]
+    assert_equal "vacation", holidays.first[:name]
+    assert_equal [:hu], holidays.first[:regions]
+  end
+
+  def test_extra_vacation_dates_do_not_override_a_real_holiday
+    holidays = Holidays.between(
+      Date.civil(2026, 12, 25), Date.civil(2026, 12, 25),
+      :hu, :extra_vacation_dates => ["2026-12-25"],
+    )
+
+    assert_equal "Karácsony", holidays.first[:name]
+  end
+
+  def test_extra_vacation_dates_outside_the_range_are_ignored
+    holidays = Holidays.between(
+      Date.civil(2026, 12, 1), Date.civil(2026, 12, 20),
+      :hu, :extra_vacation_dates => ["2026-12-24"],
+    )
+
+    assert_not_includes holidays.map { |h| h[:date] }, Date.civil(2026, 12, 24)
+  end
+
   # --- the full scenario from the request ------------------------------------
 
   def test_bridge_days_plus_saturdays_minus_working_dates
